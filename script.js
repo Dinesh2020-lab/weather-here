@@ -1,6 +1,6 @@
 // app.js
 
-const apiKey = " 1d38882a9661bc19d92cb17d74cab11f ";
+const apiKey = " c47f5594831641c9af3150119251108 ";
 
 const searchInput = document.getElementById("search-input");
 const searchBtn = document.getElementById("search-btn");
@@ -209,3 +209,4 @@ fahrenheitBtn.addEventListener("click", () => {
 
 // Load default city weather on startup
 fetchWeatherByCity("Barcelona");
+
