@@ -1,47 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title> Weather App</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Resume Analyzer</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <h1>WeatherNow</h1>
-      <div class="search-container">
-        <input type="text" id="search-input" placeholder="Enter city name..." />
-        <button id="search-btn">Search</button>
-        <button id="location-btn" title="Get weather for current location">📍</button>
-      </div>
-      <div class="unit-toggle">
-        <button id="celsius-btn" class="active">°C</button>
-        <button id="fahrenheit-btn">°F</button>
-      </div>
-    </header>
+  <div class="container">
+    <h1>🌈 AI Resume Analyzer</h1>
 
-    <main>
-      <section class="current-weather">
-        <h2 id="city-name">--</h2>
-        <div id="weather-icon"></div>
-        <div id="temp">--°</div>
-        <div id="description">--</div>
-        <div class="details">
-          <div>Humidity: <span id="humidity">--%</span></div>
-          <div>Wind: <span id="wind">-- km/h</span></div>
-        </div>
-      </section>
+    <div class="input-section">
+      <textarea id="resumeText" placeholder="Paste your Resume text here..."></textarea>
+      <textarea id="jobText" placeholder="Paste the Job Description here..."></textarea>
+      <button onclick="analyzeResume()">✨ Analyze</button>
+    </div>
 
-      <section class="forecast">
-        <h3>5-Day Forecast</h3>
-        <div id="forecast-cards" class="forecast-cards">
-          <!-- Forecast cards inserted here -->
-        </div>
-      </section>
-    </main>
+    <div id="result" class="result-section hidden">
+      <h2>📊 Analysis Result</h2>
+      <p><b>Match Score:</b> <span id="score">0</span>%</p>
+      <p><b>Missing Keywords:</b> <span id="missing">None</span></p>
+      <canvas id="resumeChart"></canvas>
+    </div>
   </div>
 
-  <script src="app.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
