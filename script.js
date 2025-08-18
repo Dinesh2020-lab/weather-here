@@ -1,212 +1,67 @@
-// app.js
+function analyzeResume() {
+  const resumeText = document.getElementById("resumeText").value.toLowerCase();
+  const jobText = document.getElementById("jobText").value.toLowerCase();
 
-const apiKey = " c47f5594831641c9af3150119251108 ";
-
-const searchInput = document.getElementById("search-input");
-const searchBtn = document.getElementById("search-btn");
-const locationBtn = document.getElementById("location-btn");
-const cityNameEl = document.getElementById("city-name");
-const weatherIconEl = document.getElementById("weather-icon");
-const tempEl = document.getElementById("temp");
-const descriptionEl = document.getElementById("description");
-const humidityEl = document.getElementById("humidity");
-const windEl = document.getElementById("wind");
-const forecastCardsContainer = document.getElementById("forecast-cards");
-const celsiusBtn = document.getElementById("celsius-btn");
-const fahrenheitBtn = document.getElementById("fahrenheit-btn");
-
-let currentUnit = "metric"; // metric for Celsius, imperial for Fahrenheit
-let currentCity = "";
-
-function kelvinToCelsius(kelvin) {
-  return kelvin - 273.15;
-}
-
-function kelvinToFahrenheit(kelvin) {
-  return (kelvin - 273.15) * 9/5 + 32;
-}
-
-// Helper: get icon HTML from OpenWeatherMap icon code
-function getWeatherIcon(iconCode) {
-  return <img src="https://openweathermap.org/img/wn/${iconCode}@2x.png" alt="weather icon" />;
-}
-
-// Format date to day of week short name
-function getDayName(dateStr) {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString(undefined, { weekday: "short" });
-}
-
-async function fetchWeatherByCity(city) {
-  try {
-    const currentWeatherUrl = https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${currentUnit};
-    const forecastUrl = https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${apiKey}&units=${currentUnit};
-
-    const [currentRes, forecastRes] = await Promise.all([
-      fetch(currentWeatherUrl),
-      fetch(forecastUrl)
-    ]);
-
-    if (!currentRes.ok) throw new Error("City not found");
-    if (!forecastRes.ok) throw new Error("Forecast not found");
-
-    const currentData = await currentRes.json();
-    const forecastData = await forecastRes.json();
-
-    updateCurrentWeatherUI(currentData);
-    updateForecastUI(forecastData);
-  } catch (error) {
-    alert("Error: " + error.message);
+  if (!resumeText || !jobText) {
+    alert("⚠ Please paste both Resume and Job Description!");
+    return;
   }
-}
 
-async function fetchWeatherByCoords(lat, lon) {
-  try {
-    const currentWeatherUrl = https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=${currentUnit};
-    const forecastUrl = https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=${currentUnit};
+  // Extract keywords (words with 4+ letters)
+  const jobWords = jobText.match(/\b[a-z]{4,}\b/g) || [];
+  const resumeWords = resumeText.match(/\b[a-z]{4,}\b/g) || [];
 
-    const [currentRes, forecastRes] = await Promise.all([
-      fetch(currentWeatherUrl),
-      fetch(forecastUrl)
-    ]);
+  const jobSet = new Set(jobWords);
+  const resumeSet = new Set(resumeWords);
 
-    if (!currentRes.ok) throw new Error("Location weather not found");
-    if (!forecastRes.ok) throw new Error("Location forecast not found");
+  let matched = [];
+  let missing = [];
 
-    const currentData = await currentRes.json();
-    const forecastData = await forecastRes.json();
-
-    updateCurrentWeatherUI(currentData);
-    updateForecastUI(forecastData);
-  } catch (error) {
-    alert("Error: " + error.message);
-  }
-}
-
-function updateCurrentWeatherUI(data) {
-  currentCity = data.name;
-
-  cityNameEl.textContent = ${data.name}, ${data.sys.country};
-  weatherIconEl.innerHTML = getWeatherIcon(data.weather[0].icon);
-  tempEl.textContent = ${Math.round(data.main.temp)}°;
-  descriptionEl.textContent = data.weather[0].description;
-  humidityEl.textContent = ${data.main.humidity}%;
-  windEl.textContent = ${Math.round(data.wind.speed)} ${currentUnit === "metric" ? "km/h" : "mph"};
-
-  updateBackground(data.weather[0].main);
-}
-
-function updateForecastUI(data) {
-  // OpenWeatherMap provides 3-hour interval data.
-  // We'll extract daily data at 12:00 PM for 5 days.
-  const dailyData = {};
-
-  data.list.forEach(item => {
-    if (item.dt_txt.includes("12:00:00")) {
-      const day = item.dt_txt.split(" ")[0];
-      dailyData[day] = item;
+  jobSet.forEach(word => {
+    if (resumeSet.has(word)) {
+      matched.push(word);
+    } else {
+      missing.push(word);
     }
   });
 
-  forecastCardsContainer.innerHTML = "";
+  const score = Math.round((matched.length / jobSet.size) * 100);
 
-  Object.values(dailyData).slice(0, 5).forEach(dayData => {
-    const dayName = getDayName(dayData.dt_txt);
-    const icon = dayData.weather[0].icon;
-    const tempMax = Math.round(dayData.main.temp_max);
-    const tempMin = Math.round(dayData.main.temp_min);
+  // Update UI
+  document.getElementById("result").classList.remove("hidden");
+  document.getElementById("score").textContent = score;
+  document.getElementById("missing").textContent = missing.slice(0,10).join(", ") || "None";
 
-    const card = document.createElement("div");
-    card.classList.add("forecast-card");
-
-    card.innerHTML = `
-      <h4>${dayName}</h4>
-      <div class="forecast-icon">${getWeatherIcon(icon)}</div>
-      <div class="forecast-temp">${tempMax}° / ${tempMin}°</div>
-    `;
-
-    forecastCardsContainer.appendChild(card);
+  // Chart.js with colorful doughnut
+  const ctx = document.getElementById("resumeChart").getContext("2d");
+  if (window.resumeChart) window.resumeChart.destroy();
+  window.resumeChart = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: ["Matched Keywords", "Missing Keywords"],
+      datasets: [{
+        data: [matched.length, missing.length],
+        backgroundColor: [
+          "rgba(72,239,128,0.9)",   // green
+          "rgba(255,99,132,0.9)"    // red
+        ],
+        borderColor: [
+          "rgba(72,239,128,1)",
+          "rgba(255,99,132,1)"
+        ],
+        borderWidth: 2
+      }]
+    },
+    options: {
+      plugins: {
+        legend: {
+          labels: { color: "#fff", font: { size: 14 } }
+        }
+      },
+      animation: {
+        animateScale: true,
+        animateRotate: true
+      }
+    }
   });
 }
-
-function updateBackground(weatherMain) {
-  let bg;
-
-  switch (weatherMain.toLowerCase()) {
-    case "clear":
-      bg = "linear-gradient(to bottom, #fceabb, #f8b500)";
-      break;
-    case "clouds":
-      bg = "linear-gradient(to bottom, #d7d2cc, #304352)";
-      break;
-    case "rain":
-    case "drizzle":
-      bg = "linear-gradient(to bottom, #4a90e2, #004e92)";
-      break;
-    case "thunderstorm":
-      bg = "linear-gradient(to bottom, #0f2027, #203a43, #2c5364)";
-      break;
-    case "snow":
-      bg = "linear-gradient(to bottom, #e6e9f0, #eef1f5)";
-      break;
-    case "mist":
-    case "fog":
-      bg = "linear-gradient(to bottom, #606c88, #3f4c6b)";
-      break;
-    default:
-      bg = "linear-gradient(to bottom, #87ceeb, #e0f7fa)";
-  }
-
-  document.body.style.background = bg;
-}
-
-// Event Listeners
-searchBtn.addEventListener("click", () => {
-  const city = searchInput.value.trim();
-  if (city) {
-    fetchWeatherByCity(city);
-  }
-});
-
-searchInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    searchBtn.click();
-  }
-});
-
-locationBtn.addEventListener("click", () => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      position => {
-        fetchWeatherByCoords(position.coords.latitude, position.coords.longitude);
-      },
-      () => {
-        alert("Geolocation permission denied or not available.");
-      }
-    );
-  } else {
-    alert("Geolocation is not supported by your browser.");
-  }
-});
-
-celsiusBtn.addEventListener("click", () => {
-  if (currentUnit !== "metric") {
-    currentUnit = "metric";
-    celsiusBtn.classList.add("active");
-    fahrenheitBtn.classList.remove("active");
-    if (currentCity) fetchWeatherByCity(currentCity);
-  }
-});
-
-fahrenheitBtn.addEventListener("click", () => {
-  if (currentUnit !== "imperial") {
-    currentUnit = "imperial";
-    fahrenheitBtn.classList.add("active");
-    celsiusBtn.classList.remove("active");
-    if (currentCity) fetchWeatherByCity(currentCity);
-  }
-});
-
-// Load default city weather on startup
-fetchWeatherByCity("Barcelona");
-
